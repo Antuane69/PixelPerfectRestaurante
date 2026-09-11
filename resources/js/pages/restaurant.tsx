@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Image } from 'antd';
 import { useState } from 'react';
 import { SiteFooter } from '@/components/site-footer';
+import { RestaurantPromotion } from '@/components/restaurant-promotion';
 import {
     ArrowRight,
     BookOpen,
@@ -360,6 +361,7 @@ export default function Restaurant({
                     </button>
                 </nav>
             </header>
+            <RestaurantPromotion onContact={() => setContactOpen(true)} />
             <main id="contenido">
                 {view === 'home' ? (
                     <>
