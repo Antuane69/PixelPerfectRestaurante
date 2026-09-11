@@ -1,12 +1,16 @@
 import { Head, Link } from '@inertiajs/react';
+import { Image } from 'antd';
 import { useState } from 'react';
+import { SiteFooter } from '@/components/site-footer';
 import {
     ArrowRight,
     BookOpen,
+    Camera,
     ChefHat,
     Clock3,
     Gift,
     Heart,
+    Images,
     Leaf,
     MapPin,
     Menu as MenuIcon,
@@ -77,6 +81,11 @@ const dishes = [
     },
 ];
 const photo = (name: string) => '/images/restaurant/' + name + '.jpg';
+const exampleAddress =
+    'Av. México s/n, Hipódromo, Cuauhtémoc, 06100 Ciudad de México, CDMX';
+const encodedAddress = encodeURIComponent(exampleAddress);
+const mapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+const mapsEmbedUrl = `https://www.google.com/maps?q=${encodedAddress}&output=embed`;
 const benefits = [
     {
         icon: Leaf,
@@ -100,17 +109,151 @@ const benefits = [
     },
 ];
 
+type SocialNetwork = 'facebook' | 'instagram' | 'tiktok';
+
+const socialLinks: Array<{
+    name: string;
+    type: SocialNetwork;
+    href: string;
+}> = [
+    {
+        name: 'Facebook',
+        type: 'facebook',
+        href: 'https://www.facebook.com/',
+    },
+    {
+        name: 'Instagram',
+        type: 'instagram',
+        href: 'https://www.instagram.com/',
+    },
+    {
+        name: 'TikTok',
+        type: 'tiktok',
+        href: 'https://www.tiktok.com/',
+    },
+];
+
+const galleryCategories = ['Todo', 'El espacio', 'Nuestra cocina', 'Momentos'];
+const galleryPhotos = [
+    {
+        image: 'interior',
+        category: 'El espacio',
+        title: 'Un rincón para compartir',
+        alt: 'Interior cálido del restaurante con mesas de madera y plantas',
+    },
+    {
+        image: 'hero',
+        category: 'Nuestra cocina',
+        title: 'El sabor de la casa',
+        alt: 'Pasta de la casa servida en una mesa del restaurante',
+    },
+    {
+        image: 'takeaway',
+        category: 'Momentos',
+        title: 'También para llevar',
+        alt: 'Presentación de comida para llevar del restaurante',
+    },
+    {
+        image: 'pasta',
+        category: 'Nuestra cocina',
+        title: 'Pasta hecha al momento',
+        alt: 'Pasta cremosa con tomates cherry y albahaca',
+    },
+    {
+        image: 'hamburguesa',
+        category: 'Nuestra cocina',
+        title: 'Nuestra hamburguesa artesanal',
+        alt: 'Hamburguesa artesanal acompañada de papas doradas',
+    },
+    {
+        image: 'ensalada',
+        category: 'Nuestra cocina',
+        title: 'Fresco y de temporada',
+        alt: 'Ensalada del huerto con aguacate y vegetales frescos',
+    },
+    {
+        image: 'bruschettas',
+        category: 'Momentos',
+        title: 'Para comenzar juntos',
+        alt: 'Bruschettas para compartir con tomate y albahaca',
+    },
+    {
+        image: 'limonada',
+        category: 'Momentos',
+        title: 'Sobremesas que se alargan',
+        alt: 'Limonada natural servida en la mesa',
+    },
+    {
+        image: 'tarta',
+        category: 'Nuestra cocina',
+        title: 'El momento dulce',
+        alt: 'Tarta de frutos rojos preparada en el restaurante',
+    },
+];
+
+function SocialIcon({ type }: { type: SocialNetwork }) {
+    if (type === 'facebook') {
+        return (
+            <svg
+                className="social-icon social-facebook"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+            >
+                <path d="M14.2 8.4V6.7c0-.8.5-1 1-1h2.6V2.1L15.1 2c-3.4 0-5.5 2-5.5 5.6v.8H6.7v4h2.9V22h4.6v-9.6h3.2l.5-4h-3.7Z" />
+            </svg>
+        );
+    }
+
+    if (type === 'tiktok') {
+        return (
+            <svg
+                className="social-icon social-tiktok"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+            >
+                <path d="M15.4 2c.3 2.5 1.7 4 4.2 4.2v3.5a8.6 8.6 0 0 1-4.2-1.2v6.6a6.8 6.8 0 1 1-5.9-6.7v3.7a3.2 3.2 0 1 0 2.3 3V2h3.6Z" />
+            </svg>
+        );
+    }
+
+    return (
+        <svg
+            className="social-icon social-instagram"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <rect x="3" y="3" width="18" height="18" rx="5" />
+            <circle cx="12" cy="12" r="4.2" />
+            <circle cx="17.4" cy="6.7" r="1" className="social-dot" />
+        </svg>
+    );
+}
+
 export default function Restaurant({
     view = 'home',
 }: {
-    view?: 'home' | 'menu';
+    view?: 'home' | 'menu' | 'gallery';
 }) {
     const isMenu = view === 'menu';
+    const isGallery = view === 'gallery';
     const [category, setCategory] = useState('Todo');
+    const [galleryCategory, setGalleryCategory] = useState('Todo');
     const [mobileOpen, setMobileOpen] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
-    const visibleDishes = dishes.filter(
-        (dish) => category === 'Todo' || dish.category === category,
+    const visibleMenuSections = categories
+        .filter((item) => item !== 'Todo')
+        .filter((item) => category === 'Todo' || item === category)
+        .map((name) => ({
+            name,
+            dishes: dishes.filter((dish) => dish.category === name),
+        }));
+    const visibleDishCount = visibleMenuSections.reduce(
+        (total, section) => total + section.dishes.length,
+        0,
+    );
+    const visibleGalleryPhotos = galleryPhotos.filter(
+        (item) =>
+            galleryCategory === 'Todo' || item.category === galleryCategory,
     );
     const menuLink = (label = 'Ver menú completo', dark = false) => (
         <Link
@@ -127,7 +270,9 @@ export default function Restaurant({
                 title={
                     isMenu
                         ? 'Nuestro menú | Restaurante Pixel Perfect'
-                        : 'Restaurante Pixel Perfect'
+                        : isGallery
+                          ? 'Galería | Restaurante Pixel Perfect'
+                          : 'Restaurante Pixel Perfect'
                 }
             >
                 <meta
@@ -142,9 +287,22 @@ export default function Restaurant({
                 <Link
                     className="wordmark"
                     href="/"
-                    aria-label="Restaurante Pixel Perfect, inicio"
+                    aria-label="Pixel Perfect, inicio"
                 >
-                    Restaurante Pixel Perfect <Sprout aria-hidden="true" />
+                    <span className="pixel-perfect-lockup" aria-hidden="true">
+                        <img
+                            className="pixel-perfect-mark"
+                            src="/images/restaurant/pixel-perfect-mark.png"
+                            alt=""
+                        />
+                        <span className="pixel-perfect-name">
+                            <span className="pixel-perfect-pixel">PIXEL</span>
+                            <span className="pixel-perfect-perfect">
+                                PERFECT
+                            </span>
+                        </span>
+                    </span>
+                    <Sprout aria-hidden="true" />
                 </Link>
                 <button
                     className="mobile-toggle"
@@ -164,7 +322,7 @@ export default function Restaurant({
                 >
                     <Link
                         href="/"
-                        aria-current={!isMenu ? 'page' : undefined}
+                        aria-current={view === 'home' ? 'page' : undefined}
                         onClick={() => setMobileOpen(false)}
                     >
                         Inicio
@@ -180,16 +338,11 @@ export default function Restaurant({
                         Menú
                     </Link>
                     <Link
-                        href="/#nosotros"
+                        href="/galeria"
+                        aria-current={isGallery ? 'page' : undefined}
                         onClick={() => setMobileOpen(false)}
                     >
-                        Nosotros
-                    </Link>
-                    <Link
-                        href="/#ubicacion"
-                        onClick={() => setMobileOpen(false)}
-                    >
-                        Ubicación
+                        Galería
                     </Link>
                     <button
                         className="restaurant-button header-cta"
@@ -208,7 +361,7 @@ export default function Restaurant({
                 </nav>
             </header>
             <main id="contenido">
-                {!isMenu ? (
+                {view === 'home' ? (
                     <>
                         <section className="restaurant-hero">
                             <img
@@ -256,87 +409,69 @@ export default function Restaurant({
                                 </Link>
                             </div>
                             <div className="food-mosaic">
-                                <Link
-                                    href="/menu"
-                                    className="mosaic-photo mosaic-pasta"
-                                >
-                                    <img
-                                        src={photo('pasta')}
-                                        alt="Pasta de la casa"
-                                        loading="lazy"
-                                    />
-                                </Link>
-                                <Link
-                                    href="/menu"
-                                    className="mosaic-photo mosaic-burger"
-                                >
-                                    <img
-                                        src={photo('hamburguesa')}
-                                        alt="Hamburguesa artesanal"
-                                        loading="lazy"
-                                    />
-                                </Link>
-                                <Link
-                                    href="/menu"
-                                    className="mosaic-photo mosaic-salad"
-                                >
-                                    <img
-                                        src={photo('ensalada')}
-                                        alt="Ensalada del huerto"
-                                        loading="lazy"
-                                    />
-                                </Link>
-                                <Link
-                                    href="/menu"
-                                    className="mosaic-photo mosaic-cake"
-                                >
-                                    <img
-                                        src={photo('tarta')}
-                                        alt="Tarta de frutos rojos"
-                                        loading="lazy"
-                                    />
-                                </Link>
-                                <Link
-                                    href="/menu"
-                                    className="mosaic-photo mosaic-drink"
-                                >
-                                    <img
-                                        src={photo('limonada')}
-                                        alt="Limonada natural"
-                                        loading="lazy"
-                                    />
-                                </Link>
-                                <Link
-                                    href="/menu"
-                                    className="mosaic-photo mosaic-toast"
-                                >
-                                    <img
-                                        src={photo('bruschettas')}
-                                        alt="Bruschettas de tomate y albahaca"
-                                        loading="lazy"
-                                    />
-                                </Link>
-                                <blockquote>
-                                    <span aria-hidden="true">“</span>
-                                    <p>
-                                        Cada plato tiene
-                                        <br />
-                                        algo que contar.
-                                    </p>
-                                    <cite>Restaurante Pixel Perfect</cite>
-                                </blockquote>
-                                <Link
-                                    href="/menu"
-                                    className="mosaic-photo mosaic-extra"
-                                >
-                                    <img
-                                        src={photo('pasta')}
-                                        alt="Descubre la cocina de la casa"
-                                        loading="lazy"
-                                    />
-                                </Link>
+                                <Image.PreviewGroup>
+                                    <div className="mosaic-photo mosaic-pasta">
+                                        <Image
+                                            src={photo('pasta')}
+                                            alt="Pasta de la casa"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <div className="mosaic-photo mosaic-burger">
+                                        <Image
+                                            src={photo('hamburguesa')}
+                                            alt="Hamburguesa artesanal"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <div className="mosaic-photo mosaic-salad">
+                                        <Image
+                                            src={photo('ensalada')}
+                                            alt="Ensalada del huerto"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <div className="mosaic-photo mosaic-cake">
+                                        <Image
+                                            src={photo('tarta')}
+                                            alt="Tarta de frutos rojos"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <div className="mosaic-photo mosaic-drink">
+                                        <Image
+                                            src={photo('limonada')}
+                                            alt="Limonada natural"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <div className="mosaic-photo mosaic-toast">
+                                        <Image
+                                            src={photo('bruschettas')}
+                                            alt="Bruschettas de tomate y albahaca"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <blockquote>
+                                        <span aria-hidden="true">“</span>
+                                        <p>
+                                            Cada plato tiene
+                                            <br />
+                                            algo que contar.
+                                        </p>
+                                        <cite>Restaurante Pixel Perfect</cite>
+                                    </blockquote>
+                                    <div className="mosaic-photo mosaic-extra">
+                                        <Image
+                                            src={photo('pasta')}
+                                            alt="Descubre la cocina de la casa"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                </Image.PreviewGroup>
                             </div>
                         </section>
+                        {/*
                         <section className="home-menu section-wrap">
                             <div className="section-heading">
                                 <div>
@@ -366,6 +501,67 @@ export default function Restaurant({
                                             <p>{dish.description}</p>
                                         </Link>
                                     ))}
+                            </div>
+                        </section>
+                        */}
+                        <section className="gallery-teaser section-wrap">
+                            <div className="gallery-teaser-copy">
+                                <div>
+                                    <p className="script-label">Galería</p>
+                                    <h2>
+                                        Conoce el lugar donde nacen los buenos
+                                        momentos
+                                    </h2>
+                                </div>
+                                <p>
+                                    Un vistazo a nuestra mesa, nuestra cocina y
+                                    esos pequeños detalles que hacen especial
+                                    cada visita.
+                                </p>
+                                <Link
+                                    href="/galeria"
+                                    className="restaurant-button button-dark"
+                                >
+                                    Ver galería completa
+                                    <Images size={18} />
+                                </Link>
+                            </div>
+                            <div className="gallery-teaser-grid">
+                                <Link
+                                    href="/galeria"
+                                    className="gallery-teaser-main"
+                                    aria-label="Ver galería: interior del restaurante"
+                                >
+                                    <img
+                                        src={photo('interior')}
+                                        alt="Interior cálido de nuestro restaurante"
+                                        loading="lazy"
+                                    />
+                                </Link>
+                                <Link
+                                    href="/galeria"
+                                    aria-label="Ver galería: nuestra mesa"
+                                >
+                                    <img
+                                        src={photo('hero')}
+                                        alt="Pasta servida en nuestra mesa"
+                                        loading="lazy"
+                                    />
+                                </Link>
+                                <Link
+                                    href="/galeria"
+                                    className="gallery-teaser-last"
+                                    aria-label="Ver las nueve fotos de la galería"
+                                >
+                                    <img
+                                        src={photo('bruschettas')}
+                                        alt="Bruschettas listas para compartir"
+                                        loading="lazy"
+                                    />
+                                    <span>
+                                        <Camera size={18} />9 fotos
+                                    </span>
+                                </Link>
                             </div>
                         </section>
                         <section id="nosotros" className="about-section">
@@ -454,9 +650,9 @@ export default function Restaurant({
                                 <p>
                                     <MapPin />
                                     <span>
-                                        Ubicación de ejemplo · Ciudad de México
+                                        Av. México s/n, Hipódromo
                                         <br />
-                                        Col. Roma Norte, CDMX
+                                        Cuauhtémoc, 06100 CDMX
                                     </span>
                                 </p>
                                 <p>
@@ -465,7 +661,7 @@ export default function Restaurant({
                                 </p>
                                 <a
                                     className="restaurant-button"
-                                    href="https://www.google.com/maps/search/?api=1&query=Roma+Norte+Ciudad+de+Mexico"
+                                    href={mapsSearchUrl}
                                     target="_blank"
                                     rel="noreferrer"
                                 >
@@ -541,7 +737,7 @@ export default function Restaurant({
                             </div>
                         </section>
                     </>
-                ) : (
+                ) : isMenu ? (
                     <section className="menu-page section-wrap">
                         <div className="menu-intro">
                             <p className="script-label">
@@ -553,22 +749,31 @@ export default function Restaurant({
                                 delicioso para cada antojo.
                             </p>
                         </div>
-                        <div
-                            className="category-filters"
-                            aria-label="Filtrar platillos por categoría"
-                        >
-                            {categories.map((item) => (
-                                <button
-                                    key={item}
-                                    aria-pressed={category === item}
-                                    className={
-                                        category === item ? 'selected' : ''
-                                    }
-                                    onClick={() => setCategory(item)}
-                                >
-                                    {item}
-                                </button>
-                            ))}
+                        <div className="menu-toolbar">
+                            <div
+                                className="category-filters"
+                                aria-label="Filtrar platillos por categoría"
+                            >
+                                {categories.map((item) => (
+                                    <button
+                                        key={item}
+                                        aria-pressed={category === item}
+                                        className={
+                                            category === item ? 'selected' : ''
+                                        }
+                                        onClick={() => setCategory(item)}
+                                    >
+                                        {item}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                className="restaurant-button button-dark menu-toolbar-contact"
+                                onClick={() => setContactOpen(true)}
+                            >
+                                Contactar
+                                <MessageCircle size={18} />
+                            </button>
                         </div>
                         <div className="menu-banner">
                             <img
@@ -583,78 +788,249 @@ export default function Restaurant({
                             </div>
                         </div>
                         <p className="sr-only" role="status">
-                            {visibleDishes.length} platillos en {category}
+                            {visibleDishCount} platillos en {category}
                         </p>
-                        <div className="menu-grid">
-                            {visibleDishes.map((dish) => (
-                                <article className="menu-dish" key={dish.name}>
-                                    <img
-                                        src={photo(dish.image)}
-                                        alt={dish.name}
-                                        loading="lazy"
-                                    />
-                                    <div>
-                                        <h2>{dish.name}</h2>
-                                        <p>{dish.description}</p>
-                                        <span className="dish-price">
-                                            ${dish.price}
+                        <div className="menu-sections">
+                            {visibleMenuSections.map((section, index) => (
+                                <section
+                                    className="menu-section"
+                                    key={section.name}
+                                    aria-labelledby={`menu-section-${index}`}
+                                >
+                                    <div className="menu-section-heading">
+                                        <div>
+                                            <p className="eyebrow">
+                                                SECCIÓN{' '}
+                                                {String(index + 1).padStart(
+                                                    2,
+                                                    '0',
+                                                )}
+                                            </p>
+                                            <h2 id={`menu-section-${index}`}>
+                                                {section.name}
+                                            </h2>
+                                        </div>
+                                        <span>
+                                            {section.dishes.length}{' '}
+                                            {section.dishes.length === 1
+                                                ? 'opción'
+                                                : 'opciones'}
                                         </span>
                                     </div>
-                                </article>
+                                    <div className="menu-grid">
+                                        {section.dishes.map((dish) => (
+                                            <article
+                                                className="menu-dish"
+                                                key={dish.name}
+                                            >
+                                                <img
+                                                    src={photo(dish.image)}
+                                                    alt={dish.name}
+                                                    loading="lazy"
+                                                />
+                                                <div>
+                                                    <h2>{dish.name}</h2>
+                                                    <p>{dish.description}</p>
+                                                    <span className="dish-price">
+                                                        ${dish.price}
+                                                    </span>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </section>
                             ))}
                         </div>
                         <p className="price-note">Precios de ejemplo en MXN</p>
-                        <div className="contact-band">
-                            <Sprout strokeWidth={0.8} aria-hidden="true" />
+                    </section>
+                ) : (
+                    <section className="gallery-page">
+                        <div className="gallery-hero section-wrap">
                             <div>
-                                <h2>¿Se te antojó algo?</h2>
-                                <p>
-                                    Escríbenos para consultar disponibilidad o
-                                    planear tu visita.
-                                </p>
+                                <p className="script-label">Nuestra galería</p>
+                                <h1>Historias servidas en imágenes</h1>
                             </div>
-                            <button
-                                className="restaurant-button button-dark"
-                                onClick={() => setContactOpen(true)}
+                        </div>
+                        <div className="gallery-content section-wrap">
+                            <div
+                                className="gallery-filters"
+                                aria-label="Filtrar fotografías por categoría"
                             >
-                                <MessageCircle size={20} />
-                                Contactar
-                            </button>
+                                {galleryCategories.map((item) => (
+                                    <button
+                                        key={item}
+                                        aria-pressed={galleryCategory === item}
+                                        className={
+                                            galleryCategory === item
+                                                ? 'selected'
+                                                : ''
+                                        }
+                                        onClick={() => setGalleryCategory(item)}
+                                    >
+                                        {item}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="sr-only" role="status">
+                                {visibleGalleryPhotos.length} fotografías en{' '}
+                                {galleryCategory}
+                            </p>
+                            <Image.PreviewGroup>
+                                <div className="gallery-grid">
+                                    {visibleGalleryPhotos.map((item, index) => (
+                                        <figure
+                                            className={`gallery-card gallery-card-${index + 1}`}
+                                            key={`${item.image}-${item.title}`}
+                                        >
+                                            <Image
+                                                src={photo(item.image)}
+                                                alt={item.alt}
+                                                loading="lazy"
+                                                classNames={{
+                                                    cover: 'gallery-cover',
+                                                }}
+                                                preview={{
+                                                    cover: {
+                                                        coverNode: (
+                                                            <span className="gallery-mask">
+                                                                <Camera
+                                                                    size={20}
+                                                                />
+                                                                Ver foto
+                                                            </span>
+                                                        ),
+                                                        placement: 'center',
+                                                    },
+                                                }}
+                                            />
+                                            <figcaption>
+                                                <span>{item.category}</span>
+                                                <strong>{item.title}</strong>
+                                            </figcaption>
+                                        </figure>
+                                    ))}
+                                </div>
+                            </Image.PreviewGroup>
                         </div>
                     </section>
                 )}
+                <aside
+                    className="restaurant-social-rail"
+                    aria-label="Síguenos en redes sociales"
+                >
+                    {socialLinks.slice(0, 2).map((social) => (
+                        <div
+                            className="restaurant-social-slot"
+                            key={social.name}
+                        >
+                            <a
+                                href={social.href}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={`Visitar ${social.name}`}
+                                title={social.name}
+                            >
+                                <SocialIcon type={social.type} />
+                                <span>{social.name}</span>
+                            </a>
+                        </div>
+                    ))}
+                </aside>
             </main>
-            <footer className="restaurant-footer section-wrap">
-                <Link className="footer-brand" href="/">
-                    Restaurante
-                    <br />
-                    Pixel Perfect <Sprout />
-                </Link>
-                <div className="footer-details">
-                    <p>
+            {view === 'home' ? (
+                <section
+                    className="restaurant-footer section-wrap"
+                    aria-labelledby="restaurant-footer-heading"
+                >
+                <div className="footer-content">
+                    <div className="footer-heading">
+                        <Link
+                            id="restaurant-footer-heading"
+                            className="footer-brand"
+                            href="/"
+                        >
+                            Restaurante
+                            <br />
+                            Pixel Perfect <Sprout />
+                        </Link>
+                        <p className="footer-eyebrow">COCINA CON ALMA</p>
+                    </div>
+                    <p className="footer-message">
+                        Una mesa para compartir, sabores para recordar.
+                    </p>
+                    <div className="footer-details">
+                        <p>
+                            <MapPin size={19} />
+                            <span>
+                                Av. México s/n, Hipódromo
+                                <br />
+                                Cuauhtémoc, 06100 CDMX
+                            </span>
+                        </p>
+                        <p>
+                            <Clock3 size={19} />
+                            <span>Lun–Dom · 13:00–22:00</span>
+                        </p>
+                    </div>
+                    <div className="footer-actions">
+                        <div
+                            className="footer-socials"
+                            aria-label="Redes sociales"
+                        >
+                            {socialLinks.map((social) => (
+                                <a
+                                    key={social.name}
+                                    href={social.href}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    aria-label={`Visitar ${social.name}`}
+                                    title={social.name}
+                                >
+                                    <SocialIcon type={social.type} />
+                                </a>
+                            ))}
+                        </div>
+                        <Link className="footer-gallery-link" href="/galeria">
+                            Ver galería <ArrowRight size={16} />
+                        </Link>
+                    </div>
+                </div>
+                <div className="footer-map">
+                    <iframe
+                        src={mapsEmbedUrl}
+                        title={`Mapa de ${exampleAddress}`}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        allowFullScreen
+                    />
+                    <a
+                        className="footer-map-label"
+                        href={mapsSearchUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
                         <MapPin size={18} />
                         <span>
-                            Ubicación de ejemplo · Ciudad de México
-                            <br />
-                            Col. Roma Norte, CDMX
+                            Roma–Condesa
+                            <small>Abrir en Google Maps</small>
                         </span>
-                    </p>
-                    <p>
-                        <Clock3 size={18} />
-                        Lun–Dom · 13:00–22:00
-                    </p>
+                        <ArrowRight size={16} />
+                    </a>
                 </div>
-                <div className="footer-right">
-                    <Link href="/menu">
-                        Nuestro menú <ArrowRight size={15} />
-                    </Link>
+                <div className="footer-bottom">
                     <p>
                         © {new Date().getFullYear()} Restaurante Pixel Perfect.
-                        <br />
                         Todos los derechos reservados.
                     </p>
+                    <nav aria-label="Navegación del pie de página">
+                        <Link href="/">Inicio</Link>
+                        <Link href="/menu">Menú</Link>
+                        <Link href="/galeria">Galería</Link>
+                    </nav>
                 </div>
-            </footer>
+                </section>
+            ) : null}
+            <SiteFooter />
             <Dialog open={contactOpen} onOpenChange={setContactOpen}>
                 <DialogContent className="restaurant-contact">
                     <Sprout className="contact-leaf" />
